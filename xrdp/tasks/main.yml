@@ -1,0 +1,47 @@
+---
+- name: Xrdp | Install xrdp
+  ansible.builtin.apt:
+    name: xrdp
+    state: latest
+    update_cache: true
+  become: true
+
+- name: Xrdp | Add existing user xrdp to group ssl-cert
+  ansible.builtin.user:
+    name: xrdp
+    groups: ssl-cert
+    append: yes
+  become: true
+
+- name: Xrdp | Reloaded xrdp
+  ansible.builtin.systemd:
+    name: xrdp
+    enabled: true
+    state: reloaded
+    daemon_reload: true
+  become: true
+
+- name: Xrdp | Copy config files to hosts
+  ansible.builtin.template:
+    src: "xrdp.ini.j2"
+    dest: "/etc/xrdp/xrdp.ini"
+    owner: root
+    mode: 0644
+  become: true
+
+- name: "Xrdp iptables | Input chain rules to {{ special_port }} port"
+  ansible.builtin.iptables:
+    action: insert
+    chain: INPUT
+    protocol: tcp
+    destination_port: "{{ special_port }}"
+    jump: ACCEPT
+  become: true
+
+- name: Xrdp | Run xrdp
+  ansible.builtin.systemd:
+    name: xrdp
+    enabled: true
+    state: restarted
+    daemon_reload: true
+  become: true

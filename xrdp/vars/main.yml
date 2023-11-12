@@ -1,0 +1,3 @@
+---
+# vars file for xrdp
+special_port: "3300"
